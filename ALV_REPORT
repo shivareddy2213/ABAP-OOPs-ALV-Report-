@@ -1,0 +1,117 @@
+REPORT ZALV_REPORT.
+TYPES: BEGIN OF TY_DATA,
+       emp id type zemp_id,
+       emp name type zemp name,
+       dept type zdept,
+       doj type zdate,
+       basic type zbasic,
+       hra type zhra,
+       bonus type zbonus,
+       total type ztotal,
+       amount type zamount,
+       END OF TY_DATA.
+
+DATA: gt_emp type table of ty_data,
+      gs_emp type ty_data,
+      gt_fieldcat type slis_t_fieldcat_alv,
+      gs_fieldcat type slis_fieldcat_alv,
+      gt_sort type slis_t_sortinfo_alv,
+      gs_sort type slis sortinfo_alv.
+
+SELECT-OPTIONS:
+      s_emp for gs_emp-emp_id,
+      s_dept for gs emp-dept.
+
+START-OF-SELECTION.
+
+select
+      a~emp_id,
+      a~emp name,
+      a~dept,
+      a~doj,
+      b~basic,
+      b~hra,
+      b~bonus,
+      b~total
+      into table @gt emp from zemp_master 
+      as a inner join
+      zemp_salary as b on a emp_id = b~emp_id
+      where a dept in @s dept
+      and a emp id in @s emp.
+
+* CREATING FIELD CATALOG MANUALLY
+
+      CLEAR gs_fieldcat.
+      gs_fieldcat-fieldname 'EMP_ID'.
+      gs_fieldcat-seltext_m = 'EMPLOYEE ID'.
+      *gs_fieldcat-do_sum = 'X'.
+      append gs_fieldcat to gt_fieldcat.
+
+      CLEAR gs_fieldcat.
+      gs_fieldcat-fieldname = 'EMP_NAME'.
+      gs_fieldcat-seltext_m = 'EMPLOYEE NAME'.
+      *gs_fieldcat-do_sum = 'X',
+      append gs_fieldcat to gt_fieldcat.
+
+      CLEAR gs_fieldcat.
+      gs_fieldcat-fieldname = 'DEPT'. 
+      gs_fieldcat-seltext_m = 'DEPARTMENT'. 
+      *gs_fieldcat-do_sum = 'X'.
+      append gs_fieldcat to gt_fieldcat.
+
+      CLEAR gs_fieldcat.
+      gs_fieldcat-fieldname = 'DOJ'.
+      gs_fieldcat-seltext_m = 'DATE OF JOINING'.
+      *gs_fieldcat-do_sum = 'X'
+      append gs_fieldcat to gt_fieldcat.
+
+
+      CLEAR gs_fieldcat.
+      gs_fieldcat-fieldname = 'BASIC'.
+      gs_fieldcat-seltext_m = 'BASIC SALARY'.
+      gs_fieldcat-do_sum = 'x'.
+      append gs_fieldcat to gt_fieldcat.
+
+      CLEAR gs_fieldcat.
+      gs_fieldcat-fieldname = 'HRA'. 
+      gs_fieldcat-seltext_m = 'HRA'.
+      gs_fieldcat-do_sum = 'X'.
+      append gs_fieldcat to gt_fieldcat.
+
+
+      CLEAR gs_fieldcat.
+      gs_fieldcat-fieldname = 'BONUS'.
+      gs_fieldcat-seltext m = 'BONUS'.
+      gs_fieldcat-do_sum = 'X'.
+      append gs_fieldcat to gt_fieldcat.
+
+
+      CLEAR gs_fieldcat.
+      gs_fieldcat-fieldname = 'TOTAL'.
+      gs_fieldcat-seltext_m = 'TOTAL SALARY'.
+      gs_fieldcat-do_sum = 'X'.
+      append gs_fieldcat to gt_fieldcat.
+
+
+      *SORTING
+
+      gs_sort-fieldname = 'DEPT'.
+      gs_sort-up = 'X'.
+      gs_sort-subtot = 'X'.
+      append gs_sort to gt_sort.
+
+      *ALV DISPLAY
+
+      CALL FUNCTION 'REUSE ALV GRID DISPLAY'
+        EXPORTING
+          I CALLBACK PROGRAM = sy-repid
+          IT FIELDCAT = gt fieldcat
+          IT SORT = gt sort
+        TABLES
+          t outtab = gt_emp
+        EXCEPTIONS
+          PROGRAM ERROR = 1
+          OTHERS = 2
+      IF sy-subrc <> 0.
+      * Implement suitable error handling here
+      ENDIF.
